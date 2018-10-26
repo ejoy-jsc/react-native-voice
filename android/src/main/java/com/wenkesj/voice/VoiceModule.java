@@ -35,6 +35,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   private SpeechRecognizer speech = null;
   private boolean isRecognizing = false;
   private String locale = null;
+  private long timeStamp = 0l;
 
   public VoiceModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -247,6 +248,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   @Override
   public void onBeginningOfSpeech() {
     WritableMap event = Arguments.createMap();
+    timeStamp = System.currentTimeMillis();
     event.putBoolean("error", false);
     sendEvent("onSpeechStart", event);
     Log.d("ASR", "onBeginningOfSpeech()");
@@ -324,7 +326,10 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   @Override
   public void onRmsChanged(float rmsdB) {
     WritableMap event = Arguments.createMap();
-    event.putDouble("value", (double) rmsdB);
+    long _currentTime = System.currentTimeMillis() - timeStamp;
+    event.putDouble("currentMetering", (double) rmsdB);
+    event.putLong("currentTime", _currentTime);
+
     sendEvent("onSpeechVolumeChanged", event);
   }
 
