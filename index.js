@@ -22,6 +22,7 @@ class RCTVoice {
       'onSpeechResults': this._onSpeechResults.bind(this),
       'onSpeechPartialResults': this._onSpeechPartialResults.bind(this),
       'onSpeechVolumeChanged': this._onSpeechVolumeChanged.bind(this)
+      'onSpeechProgressing': this._onSpeechProgressing.bind(this)
     };
   }
   removeAllListeners() {
@@ -32,6 +33,7 @@ class RCTVoice {
     Voice.onSpeechResults = null;
     Voice.onSpeechPartialResults = null;
     Voice.onSpeechVolumeChanged = null;
+    Voice.onSpeechProgressing = null;
   }
   destroy() {
     if (!this._loaded && !this._listeners) {
@@ -154,6 +156,11 @@ class RCTVoice {
   _onSpeechVolumeChanged(e) {
     if (this.onSpeechVolumeChanged) {
       this.onSpeechVolumeChanged(e);
+    }
+  }
+  _onSpeechProgressing(e) {
+    if (this.onSpeechProgressing) {
+      this.onSpeechProgressing(e);
     }
   }
 }

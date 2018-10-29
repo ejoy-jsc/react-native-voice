@@ -10,6 +10,8 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
@@ -35,11 +37,41 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   private SpeechRecognizer speech = null;
   private boolean isRecognizing = false;
   private String locale = null;
-  private long timeStamp = 0l;
+  private Timer timer;
+  private int recorderSecondsElapsed = 0l;
+  private double amp;
 
   public VoiceModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
+  }
+
+  private void stopTimer(){
+    amp = 0;
+    recorderSecondsElapsed = 0l;
+
+    if (timer != null) {
+      timer.cancel();
+      timer.purge();
+      timer = null;
+    }
+
+  }
+
+
+  private void startTimer(){
+    timer = new Timer();
+    timer.scheduleAtFixedRate(new TimerTask() {
+      @Override
+      public void run() {
+        WritableMap event = Arguments.createMap();
+
+        event.putDouble("currentMetering", amp);
+        event.putLong("currentTime", recorderSecondsElapsed);
+        sendEvent("onSpeechProgressing", event);
+        recorderSecondsElapsed++;
+      }
+    }, 0, 1000);
   }
 
   private String getLocale(String locale) {
@@ -143,6 +175,8 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       @Override
       public void run() {
         try {
+          stopTimer();
+          startTimer();
           startListening(opts);
           isRecognizing = true;
           callback.invoke(false);
@@ -156,6 +190,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   @ReactMethod
   public void stopSpeech(final Callback callback) {
     Handler mainHandler = new Handler(this.reactContext.getMainLooper());
+    stopTimer();
     mainHandler.post(new Runnable() {
       @Override
       public void run() {
@@ -174,6 +209,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
   @ReactMethod
   public void cancelSpeech(final Callback callback) {
+    stopTimer();
     Handler mainHandler = new Handler(this.reactContext.getMainLooper());
     mainHandler.post(new Runnable() {
       @Override
@@ -193,6 +229,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
   @ReactMethod
   public void destroySpeech(final Callback callback) {
+    stopTimer();
     Handler mainHandler = new Handler(this.reactContext.getMainLooper());
     mainHandler.post(new Runnable() {
       @Override
@@ -248,7 +285,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   @Override
   public void onBeginningOfSpeech() {
     WritableMap event = Arguments.createMap();
-    timeStamp = System.currentTimeMillis();
     event.putBoolean("error", false);
     sendEvent("onSpeechStart", event);
     Log.d("ASR", "onBeginningOfSpeech()");
@@ -326,10 +362,8 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   @Override
   public void onRmsChanged(float rmsdB) {
     WritableMap event = Arguments.createMap();
-    long _currentTime = System.currentTimeMillis() - timeStamp;
-    event.putDouble("currentMetering", (double) rmsdB);
-    event.putLong("currentTime", _currentTime);
-
+    amp = (double) rmsdB;
+    event.putDouble("value", amp);
     sendEvent("onSpeechVolumeChanged", event);
   }
 

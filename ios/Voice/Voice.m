@@ -25,7 +25,10 @@
 /** Volume level Metering*/
 @property float averagePowerForChannel0;
 @property float averagePowerForChannel1;
-@property long timeMilis;
+@property id _progressUpdateTimer;
+@property NSNumber *_currentMetering;
+@property long currentTime;
+@property long _prevTimeRange;
 
 @end
 
@@ -54,6 +57,33 @@
     
     return YES;
 }
+
+- (void)sendProgressUpdate {
+
+    long timeRange = (long long)([[NSDate date] timeIntervalSince1970]) - self.currentTime;
+
+    if (timeRange - self._prevTimeRange >= 1) {
+    [self sendEventWithName:@"onSpeechProgressing" body:@{ 
+        @"currentTime": [NSNumber numberWithLong: timeRange],
+        @"currentMetering": self._currentMetering
+        }];
+
+    self._prevTimeRange = timeRange;
+   }
+}
+
+- (void)stopProgressTimer {
+  [_progressUpdateTimer invalidate];
+  self._prevTimeRange = 0;
+}
+
+- (void)startProgressTimer {
+  [self stopProgressTimer];
+  self.currentTime = (long long)([[NSDate date] timeIntervalSince1970]);
+  _progressUpdateTimer = [CADisplayLink displayLinkWithTarget:self selector:@selector(sendProgressUpdate)];
+  [_progressUpdateTimer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+}
+
 
 - (BOOL)isHeadsetPluggedIn {
     AVAudioSessionRouteDescription* route = [[AVAudioSession sharedInstance] currentRoute];
@@ -171,7 +201,7 @@
     }
     
     [self sendEventWithName:@"onSpeechStart" body:nil];
-    self.timeMilis = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0);
+    [self startProgressTimer];
     
     // A recognition task represents a speech recognition session.
     // We keep a reference to the task so that it can be cancelled.
@@ -249,12 +279,8 @@
             // Normalizing the Volume Value on scale of (0-10)
             self.averagePowerForChannel1 = [self _normalizedPowerLevelFromDecibels:self.averagePowerForChannel1]*10;
             NSNumber *value = [NSNumber numberWithFloat:self.averagePowerForChannel1];
-            long timeRange = (long long)([[NSDate date] timeIntervalSince1970] * 1000.0) - self.timeMilis;
-            NSNumber *_currentTime = [NSNumber numberWithLong: timeRange];
-            [self sendEventWithName:@"onSpeechVolumeChanged" body:@{
-                @"currentMetering": value,
-                @"currentTime": _currentTime
-                }];
+            self._currentMetering = value;
+            [self sendEventWithName:@"onSpeechVolumeChanged" body:@{ @"value": value }];
             
             // Todo: write recording buffer to file (if user opts in)
             if (self.recognitionRequest != nil) {
@@ -300,7 +326,8 @@
              @"onSpeechError",
              @"onSpeechEnd",
              @"onSpeechRecognized",
-             @"onSpeechVolumeChanged"
+             @"onSpeechVolumeChanged",
+             @"onSpeechProgressing"
              ];
 }
 
@@ -326,19 +353,21 @@
     }
 }
 
-RCT_EXPORT_METHOD(stopSpeech:(RCTResponseSenderBlock)callback)
-{
+RCT_EXPORT_METHOD(stopSpeech:(RCTResponseSenderBlock)callback) {
+    [self stopProgressTimer];
     [self.recognitionTask finish];
     callback(@[@false]);
 }
 
 
 RCT_EXPORT_METHOD(cancelSpeech:(RCTResponseSenderBlock)callback) {
+    [self stopProgressTimer];
     [self.recognitionTask cancel];
     callback(@[@false]);
 }
 
 RCT_EXPORT_METHOD(destroySpeech:(RCTResponseSenderBlock)callback) {
+    [self stopProgressTimer];
     [self teardown];
     callback(@[@false]);
 }
