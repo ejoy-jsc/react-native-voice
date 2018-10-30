@@ -21,7 +21,7 @@ class RCTVoice {
       'onSpeechError': this._onSpeechError.bind(this),
       'onSpeechResults': this._onSpeechResults.bind(this),
       'onSpeechPartialResults': this._onSpeechPartialResults.bind(this),
-      'onSpeechVolumeChanged': this._onSpeechVolumeChanged.bind(this)
+      'onSpeechVolumeChanged': this._onSpeechVolumeChanged.bind(this),
       'onSpeechProgressing': this._onSpeechProgressing.bind(this)
     };
   }

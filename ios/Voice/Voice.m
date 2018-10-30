@@ -73,15 +73,15 @@
 }
 
 - (void)stopProgressTimer {
-  [_progressUpdateTimer invalidate];
+  [__progressUpdateTimer invalidate];
   self._prevTimeRange = 0;
 }
 
 - (void)startProgressTimer {
   [self stopProgressTimer];
   self.currentTime = (long long)([[NSDate date] timeIntervalSince1970]);
-  _progressUpdateTimer = [CADisplayLink displayLinkWithTarget:self selector:@selector(sendProgressUpdate)];
-  [_progressUpdateTimer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+  __progressUpdateTimer = [CADisplayLink displayLinkWithTarget:self selector:@selector(sendProgressUpdate)];
+  [__progressUpdateTimer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 }
 
 
@@ -200,7 +200,10 @@
         return;
     }
     
-    [self sendEventWithName:@"onSpeechStart" body:nil];
+    [self sendEventWithName:@"onSpeechStart" body:@{ 
+        @"error": nil,
+        @"ready:": true
+        }];
     [self startProgressTimer];
     
     // A recognition task represents a speech recognition session.

@@ -38,7 +38,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   private boolean isRecognizing = false;
   private String locale = null;
   private Timer timer;
-  private int recorderSecondsElapsed = 0l;
+  private int recorderSecondsElapsed = 0;
   private double amp;
 
   public VoiceModule(ReactApplicationContext reactContext) {
@@ -48,7 +48,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
   private void stopTimer(){
     amp = 0;
-    recorderSecondsElapsed = 0l;
+    recorderSecondsElapsed = 0;
 
     if (timer != null) {
       timer.cancel();
@@ -67,7 +67,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
         WritableMap event = Arguments.createMap();
 
         event.putDouble("currentMetering", amp);
-        event.putLong("currentTime", recorderSecondsElapsed);
+        event.putDouble("currentTime", (double) recorderSecondsElapsed);
         sendEvent("onSpeechProgressing", event);
         recorderSecondsElapsed++;
       }
@@ -286,6 +286,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   public void onBeginningOfSpeech() {
     WritableMap event = Arguments.createMap();
     event.putBoolean("error", false);
+    event.putBoolean("ready", false);
     sendEvent("onSpeechStart", event);
     Log.d("ASR", "onBeginningOfSpeech()");
   }
@@ -340,6 +341,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
   public void onReadyForSpeech(Bundle arg0) {
     WritableMap event = Arguments.createMap();
     event.putBoolean("error", false);
+    event.putBoolean("ready", true);
     sendEvent("onSpeechStart", event);
     Log.d("ASR", "onReadyForSpeech()");
   }
