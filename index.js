@@ -7,7 +7,7 @@ import React, {
 
 const { Voice } = NativeModules;
 
-// NativeEventEmitter is only availabe on React Native platforms, so this conditional is used to avoid import conflicts in the browser/server
+// NativeEventEmitter is only available on React Native platforms, so this conditional is used to avoid import conflicts in the browser/server
 const voiceEmitter = Platform.OS !== "web" ? new NativeEventEmitter(Voice) : null;
 
 class RCTVoice {
@@ -25,6 +25,7 @@ class RCTVoice {
       'onSpeechProgressing': this._onSpeechProgressing.bind(this)
     };
   }
+
   removeAllListeners() {
     Voice.onSpeechStart = null;
     Voice.onSpeechRecognized = null;
@@ -35,6 +36,7 @@ class RCTVoice {
     Voice.onSpeechVolumeChanged = null;
     Voice.onSpeechProgressing = null;
   }
+
   destroy() {
     if (!this._loaded && !this._listeners) {
       return Promise.resolve();
@@ -53,7 +55,9 @@ class RCTVoice {
       });
     });
   }
+
   start(locale, options = {}) {
+
     if (!this._loaded && !this._listeners && voiceEmitter !== null) {
       this._listeners = Object.keys(this._events)
         .map((key, index) => voiceEmitter.addListener(key, this._events[key]));
@@ -79,12 +83,16 @@ class RCTVoice {
       }
     });
   }
+
+
   stop() {
     if (!this._loaded && !this._listeners) {
       return Promise.resolve();
     }
+
     return new Promise((resolve, reject) => {
       Voice.stopSpeech((error) => {
+        console.log('error', error)
         if (error) {
           reject(new Error(error));
         } else {
@@ -93,6 +101,7 @@ class RCTVoice {
       });
     });
   }
+
   cancel() {
     if (!this._loaded && !this._listeners) {
       return Promise.resolve();
@@ -107,6 +116,7 @@ class RCTVoice {
       });
     });
   }
+
   isAvailable() {
     return new Promise((resolve, reject) => {
       Voice.isSpeechAvailable((isAvailable, error) => {
@@ -118,51 +128,61 @@ class RCTVoice {
       });
     });
   }
+
   isRecognizing() {
     return new Promise((resolve, reject) => {
       Voice.isRecognizing(isRecognizing => resolve(isRecognizing));
     });
   }
+
   _onSpeechStart(e) {
     if (this.onSpeechStart) {
       this.onSpeechStart(e);
     }
   }
+
   _onSpeechRecognized(e) {
     if (this.onSpeechRecognized) {
       this.onSpeechRecognized(e);
     }
   }
+
   _onSpeechEnd(e) {
     if (this.onSpeechEnd) {
       this.onSpeechEnd(e);
     }
   }
+
   _onSpeechError(e) {
     if (this.onSpeechError) {
       this.onSpeechError(e);
     }
   }
+
   _onSpeechResults(e) {
     if (this.onSpeechResults) {
       this.onSpeechResults(e);
     }
   }
+
   _onSpeechPartialResults(e) {
     if (this.onSpeechPartialResults) {
       this.onSpeechPartialResults(e);
     }
   }
+
   _onSpeechVolumeChanged(e) {
     if (this.onSpeechVolumeChanged) {
       this.onSpeechVolumeChanged(e);
     }
   }
+
   _onSpeechProgressing(e) {
     if (this.onSpeechProgressing) {
       this.onSpeechProgressing(e);
     }
   }
+
 }
 
 export default new RCTVoice();

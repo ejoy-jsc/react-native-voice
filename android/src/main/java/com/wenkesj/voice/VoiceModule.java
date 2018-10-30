@@ -176,7 +176,6 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
       public void run() {
         try {
           stopTimer();
-          startTimer();
           startListening(opts);
           isRecognizing = true;
           callback.invoke(false);
@@ -189,8 +188,8 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
   @ReactMethod
   public void stopSpeech(final Callback callback) {
-    Handler mainHandler = new Handler(this.reactContext.getMainLooper());
     stopTimer();
+    Handler mainHandler = new Handler(this.reactContext.getMainLooper());
     mainHandler.post(new Runnable() {
       @Override
       public void run() {
@@ -301,6 +300,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
   @Override
   public void onEndOfSpeech() {
+    stopTimer();
     WritableMap event = Arguments.createMap();
     event.putBoolean("error", false);
     sendEvent("onSpeechEnd", event);
@@ -339,6 +339,7 @@ public class VoiceModule extends ReactContextBaseJavaModule implements Recogniti
 
   @Override
   public void onReadyForSpeech(Bundle arg0) {
+    startTimer();
     WritableMap event = Arguments.createMap();
     event.putBoolean("error", false);
     event.putBoolean("ready", true);
