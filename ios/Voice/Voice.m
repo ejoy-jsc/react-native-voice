@@ -201,8 +201,7 @@
     }
     
     [self sendEventWithName:@"onSpeechStart" body:@{ 
-        @"error": nil,
-        @"ready:": true
+        @"ready:": [NSNumber numberWithBool:true]
         }];
     [self startProgressTimer];
     
