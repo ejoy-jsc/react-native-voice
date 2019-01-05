@@ -63,7 +63,7 @@
     long timeRange = (long long)([[NSDate date] timeIntervalSince1970]) - self.currentTime;
 
     if (timeRange - self._prevTimeRange >= 1) {
-    [self sendEventWithName:@"onSpeechProgressing" body:@{ 
+    [self sendEventWithName:@"onSpeechProgressing" body:@{  
         @"currentTime": [NSNumber numberWithLong: timeRange],
         @"currentMetering": self._currentMetering
         }];
@@ -78,10 +78,16 @@
 }
 
 - (void)startProgressTimer {
+    @try {
   [self stopProgressTimer];
   self.currentTime = (long long)([[NSDate date] timeIntervalSince1970]);
   __progressUpdateTimer = [CADisplayLink displayLinkWithTarget:self selector:@selector(sendProgressUpdate)];
   [__progressUpdateTimer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    } @catch (NSInvalidArgumentException *exception){
+        NSLog(@"[Error] - %@ %@", exception.name, exception.reason);
+        [self sendResult:@{@"code": @"startProgressTimer", @"message": [exception reason]} :nil :nil :nil];
+        [self teardown];
+    }  @finally {}
 }
 
 
