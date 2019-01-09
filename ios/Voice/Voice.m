@@ -83,7 +83,7 @@
   self.currentTime = (long long)([[NSDate date] timeIntervalSince1970]);
   __progressUpdateTimer = [CADisplayLink displayLinkWithTarget:self selector:@selector(sendProgressUpdate)];
   [__progressUpdateTimer addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-    } @catch (NSInvalidArgumentException *exception){
+    } @catch (NSException *exception){
         NSLog(@"[Error] - %@ %@", exception.name, exception.reason);
         [self sendResult:@{@"code": @"startProgressTimer", @"message": [exception reason]} :nil :nil :nil];
         [self teardown];
